@@ -91,16 +91,19 @@ namespace Leap.Unity.Recording {
       if (File.Exists(framesPath)) {
         List<Frame> frames = new List<Frame>();
 
-        using (var reader = File.OpenText(framesPath)) {
-          while (true) {
-            string line = reader.ReadLine();
-            if (string.IsNullOrEmpty(line)) {
-              break;
-            }
+        progress.Begin(1, "Loading Leap Data", "", () => {
+          progress.Step();
+          using (var reader = File.OpenText(framesPath)) {
+            while (true) {
+              string line = reader.ReadLine();
+              if (string.IsNullOrEmpty(line)) {
+                break;
+              }
 
-            frames.Add(JsonUtility.FromJson<Frame>(line));
+              frames.Add(JsonUtility.FromJson<Frame>(line));
+            }
           }
-        }
+        });
 
         leapRecording = ScriptableObject.CreateInstance(_leapRecordingType) as LeapRecording;
         if (leapRecording != null) {
@@ -176,13 +179,17 @@ namespace Leap.Unity.Recording {
           foreach (var recording in recordings) {
             progress.Step(recording.gameObject.name);
 
-            var track = timeline.CreateTrack<MethodRecordingTrack>(null, recording.gameObject.name);
-            director.SetGenericBinding(track.outputs.Query().First().sourceObject, recording);
+            try {
+              var track = timeline.CreateTrack<MethodRecordingTrack>(null, recording.gameObject.name);
+              director.SetGenericBinding(track.outputs.Query().First().sourceObject, recording);
 
-            var clip = track.CreateClip<MethodRecordingClip>();
+              var clip = track.CreateClip<MethodRecordingClip>();
 
-            recording.LoadDataFromFile();
-            clip.duration = recording.GetDuration();
+
+              clip.duration = recording.GetDuration();
+            } catch (Exception e) {
+              Debug.LogException(e);
+            }
           }
         });
       }
@@ -217,6 +224,7 @@ namespace Leap.Unity.Recording {
 
       List<EditorCurveBindingData> curveData = new List<EditorCurveBindingData>();
       progress.Begin(1, "Opening Curve Files...", "", () => {
+        progress.Step();
         using (var reader = File.OpenText(Path.Combine(dataFolder.Path, "Curves.data"))) {
           while (true) {
             string line = reader.ReadLine();

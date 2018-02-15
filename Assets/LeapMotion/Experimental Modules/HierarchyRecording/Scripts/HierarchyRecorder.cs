@@ -266,6 +266,10 @@ namespace Leap.Unity.Recording {
               var materials = renderer.sharedMaterials;
               for (int i = 0; i < materials.Length; i++) {
                 var material = materials[i];
+                if (material == null) {
+                  continue;
+                }
+
                 if (!AssetDatabase.IsMainAsset(material)) {
                   var matchingMaterial = allMaterials.Query().FirstOrDefault(m => material.name.Contains(m.name) &&
                                                                                   material.shader == m.shader);
@@ -461,7 +465,7 @@ namespace Leap.Unity.Recording {
         var methodRecordings = myGameObject.GetComponentsInChildren<MethodRecording>();
         for (int i = 0; i < methodRecordings.Length; i++) {
           var methodRecording = methodRecordings[i];
-          string fullPath = Path.Combine(finalSubFolder, "MethodRecording_" + i + ".data");
+          string fullPath = Path.Combine(finalSubFolder, "MethodRecording_" + i + ".asset");
           methodRecording.ExitRecordingMode(fullPath);
         }
 
